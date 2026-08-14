@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no"
+    />
+    <title>✨ 炫彩瀑布流 · 大数据动态渲染</title>
+    <!-- 使用 Google Font 提升字体质感 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: radial-gradient(circle at 10% 30%, #0b0e1a, #03050c);
+        min-height: 100vh;
+        font-family: "Inter", sans-serif;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      /* 主标题 —— 霓虹炫彩 */
+      .header {
+        text-align: center;
+        margin: 10px 0 30px 0;
+        position: relative;
+        z-index: 10;
+      }
+
+      .header h1 {
+        font-size: 3.2rem;
+        font-weight: 800;
+        letter-spacing: 2px;
+        background: linear-gradient(
+          135deg,
+          #f093fb 0%,
+          #f5576c 30%,
+          #4facfe 70%,
+          #43e97b 100%
+        );
+        background-size: 300% 300%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: gradShift 6s ease-in-out infinite alternate;
+        text-shadow: 0 0 30px rgba(245, 87, 108, 0.3);
+        filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.6));
+      }
+
+      @keyframes gradShift {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+
+      .sub {
+        color: rgba(255, 255, 255, 0.6);
+        font-weight: 400;
+        letter-spacing: 4px;
+        font-size: 1rem;
+        margin-top: -8px;
+        backdrop-filter: blur(2px);
+      }
+
+      /* 瀑布流容器 —— 卡片舞台 */
+      .waterfall {
+        column-count: 4;
+        column-gap: 20px;
+        max-width: 1400px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 6px;
+        position: relative;
+      }
+
+      /* 卡片 —— 炫彩玻璃质感 + 动态悬停 */
+      .card {
+        background: rgba(20, 30, 50, 0.35);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        border-radius: 28px;
+        box-shadow:
+          0 20px 40px -12px rgba(0, 0, 0, 0.7),
+          0 0 0 1px rgba(255, 255, 255, 0.06);
+        margin-bottom: 20px;
+        break-inside: avoid;
+        overflow: hidden;
+        transition: all 0.25s cubic-bezier(0.2, 0, 0, 1);
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        transform: scale(0.96) translateY(10px);
+        opacity: 0;
+        animation: cardPop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) forwards;
+        animation-delay: calc(var(--i, 0) * 30ms);
+      }
+
+      /* 卡片出现动画 */
+      @keyframes cardPop {
+        0% {
+          transform: scale(0.92) translateY(30px);
+          opacity: 0;
+        }
+        100% {
+          transform: scale(1) translateY(0);
+          opacity: 1;
+        }
+      }
+
+      /* 悬停 —— 发光 + 上浮 */
+      .card:hover {
+        transform: translateY(-10px) scale(1.02);
+        box-shadow:
+          0 30px 60px -15px rgba(0, 0, 0, 0.8),
+          0 0 0 1px rgba(255, 255, 255, 0.2),
+          0 0 30px rgba(79, 172, 254, 0.3);
+        background: rgba(30, 45, 75, 0.6);
+        transition: all 0.3s ease;
+      }
+
+      /* 卡片内图片 —— 占满宽度，高度自适应 */
+      .card img {
+        width: 100%;
+        height: auto;
+        display: block;
+        border-radius: 28px 28px 0 0;
+        pointer-events: none;
+        background: #1a1f2e;
+        aspect-ratio: attr(data-ratio);
+        object-fit: cover;
+        transition: filter 0.4s;
+      }
+
+      .card:hover img {
+        filter: brightness(1.08) saturate(1.2);
+      }
+
+      /* 卡片底部信息 —— 发光文字 */
+      .card-info {
+        padding: 16px 18px 18px 18px;
+        color: #eef2ff;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: linear-gradient(
+          180deg,
+          rgba(10, 15, 30, 0.2),
+          rgba(0, 0, 0, 0.4)
+        );
+        border-radius: 0 0 28px 28px;
+        backdrop-filter: blur(2px);
+        font-weight: 500;
+        letter-spacing: 0.3px;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .card-info .id {
+        background: rgba(79, 172, 254, 0.15);
+        padding: 4px 12px;
+        border-radius: 40px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #8ab9ff;
+        backdrop-filter: blur(2px);
+        border: 1px solid rgba(79, 172, 254, 0.2);
+      }
+
+      .card-info .size {
+        font-size: 0.75rem;
+        background: rgba(255, 255, 255, 0.03);
+        padding: 4px 12px;
+        border-radius: 40px;
+        color: #b9cdff;
+      }
+
+      /* 加载更多 —— 炫彩按钮 */
+      .load-more {
+        margin: 40px 0 60px 0;
+        padding: 14px 44px;
+        background: linear-gradient(
+          135deg,
+          #f093fb 0%,
+          #f5576c 50%,
+          #4facfe 100%
+        );
+        background-size: 250% 250%;
+        border: none;
+        border-radius: 60px;
+        color: #fff;
+        font-weight: 700;
+        font-size: 1.2rem;
+        letter-spacing: 2px;
+        cursor: pointer;
+        box-shadow: 0 8px 32px rgba(245, 87, 108, 0.4);
+        transition: all 0.25s ease;
+        animation: btnGrad 4s ease-in-out infinite alternate;
+        backdrop-filter: blur(4px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        font-family: "Inter", sans-serif;
+      }
+
+      .load-more:hover {
+        transform: scale(1.05) translateY(-4px);
+        box-shadow: 0 16px 48px rgba(79, 172, 254, 0.6);
+        letter-spacing: 4px;
+      }
+
+      .load-more:active {
+        transform: scale(0.95);
+      }
+
+      @keyframes btnGrad {
+        0% {
+          background-position: 0% 50%;
+        }
+        100% {
+          background-position: 100% 50%;
+        }
+      }
+
+      /* 计数器 —— 动态数据指示 */
+      .counter {
+        color: rgba(255, 255, 255, 0.3);
+        font-size: 0.9rem;
+        margin-top: 10px;
+        letter-spacing: 2px;
+        background: rgba(0, 0, 0, 0.3);
+        padding: 6px 22px;
+        border-radius: 60px;
+        backdrop-filter: blur(4px);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+      }
+
+      .counter span {
+        color: #b9cdff;
+        font-weight: 700;
+      }
+
+      /* 响应式列数 */
+      @media (max-width: 1100px) {
+        .waterfall {
+          column-count: 3;
+        }
+      }
+      @media (max-width: 700px) {
+        .waterfall {
+          column-count: 2;
+        }
+        .header h1 {
+          font-size: 2.4rem;
+        }
+      }
+      @media (max-width: 450px) {
+        .waterfall {
+          column-count: 1;
+        }
+      }
+
+      /* 滚动条 美颜 */
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 20px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, #f5576c, #4facfe);
+        border-radius: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>✦ 动态瀑布 ✦</h1>
+      <div class="sub">大数据渲染 · 流光溢彩</div>
+    </div>
+
+    <!-- 瀑布流容器 -->
+    <div id="waterfall" class="waterfall"></div>
+
+    <!-- 控制栏 -->
+    <div
+      style="
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 24px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      "
+    >
+      <button id="loadMoreBtn" class="load-more">⚡ 加载更多</button>
+      <div class="counter">🧊 卡片 <span id="cardCounter">0</span></div>
+    </div>
+
+    <script>
+      (function () {
+        "use strict";
+
+        // ---------- 配置 ----------
+        const CONFIG = {
+          // 每次加载数量 —— 模拟“大数据”动态追加
+          BATCH_SIZE: 16,
+          // 图片宽高比池 (宽/高) — 丰富瀑布流错落
+          RATIOS: [
+            0.7, 0.9, 1.1, 1.4, 0.6, 0.85, 1.25, 0.75, 1.0, 1.6, 0.5, 1.2,
+          ],
+          // 随机颜色主题 — 让卡片背景有绚丽感
+          COLOR_THEMES: [
+            "linear-gradient(145deg, #2b2d42, #1f2233)",
+            "linear-gradient(145deg, #1e2a3a, #0f1a2b)",
+            "linear-gradient(145deg, #2d1b2e, #1b0f1e)",
+            "linear-gradient(145deg, #1d2b3a, #0c1a2a)",
+            "linear-gradient(145deg, #1f2a3f, #0f1a30)",
+          ],
+          // 图片源 (使用Picsum 高分辨率，并且支持宽高参数，我们随机生成)
+          IMAGE_BASE: "https://picsum.photos/seed/",
+          IMAGE_WIDTH: 600, // 固定宽，高度根据比例自适应
+        };
+
+        // ---------- 状态 ----------
+        let cardId = 0; // 自增ID
+        let isLoading = false;
+        const waterfall = document.getElementById("waterfall");
+        const counterSpan = document.getElementById("cardCounter");
+
+        // ---------- 辅助 ----------
+        // 随机整数 [min,max]
+        function randomInt(min, max) {
+          return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        // 随机选取数组元素
+        function randomPick(arr) {
+          return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        // 生成一张卡片的数据 (包含图片URL, 宽高比, 颜色, ID)
+        function generateCardData() {
+          const ratio = randomPick(CONFIG.RATIOS);
+          // 为了视觉绚丽，给每张卡不同的种子，让图片随机
+          const seed = `card_${Date.now()}_${Math.random()}_${cardId}`;
+          // 图片高度 = 宽度 / 比例，保证比例准确
+          const height = Math.round(CONFIG.IMAGE_WIDTH / ratio);
+          // 利用 picsum 的种子 & 宽高直接请求，确保图片尺寸适配
+          const imgUrl = `${CONFIG.IMAGE_BASE}${seed}/${CONFIG.IMAGE_WIDTH}/${height}`;
+          const bgColor = randomPick(CONFIG.COLOR_THEMES);
+          return {
+            id: cardId++,
+            ratio: ratio,
+            imgUrl: imgUrl,
+            bgColor: bgColor,
+            height: height,
+            width: CONFIG.IMAGE_WIDTH,
+          };
+        }
+
+        // 批量生成卡片数据
+        function generateBatch(count) {
+          const batch = [];
+          for (let i = 0; i < count; i++) {
+            batch.push(generateCardData());
+          }
+          return batch;
+        }
+
+        // ---------- 渲染卡片到 DOM (使用 DocumentFragment 批量) ----------
+        function renderCards(cardsData) {
+          if (!cardsData || cardsData.length === 0) return;
+
+          const fragment = document.createDocumentFragment();
+
+          cardsData.forEach((data, index) => {
+            const card = document.createElement("div");
+            card.className = "card";
+            // 利用 CSS 自定义属性实现错落动画延迟
+            const delayIndex = (index % 12) + 1; // 0~11 循环
+            card.style.setProperty("--i", delayIndex);
+
+            // ----- 图片 -----
+            const img = document.createElement("img");
+            img.src = data.imgUrl;
+            img.alt = `card ${data.id}`;
+            img.loading = "lazy";
+            // 使用 data-ratio 保持宽高比，配合 CSS aspect-ratio 属性
+            img.setAttribute("data-ratio", data.ratio);
+            // 额外背景色，加载过程中显示
+            img.style.backgroundColor = "#121724";
+            // 图片加载完成之前，占位背景
+            img.style.background = data.bgColor;
+
+            // ----- 信息栏 -----
+            const info = document.createElement("div");
+            info.className = "card-info";
+
+            const idSpan = document.createElement("span");
+            idSpan.className = "id";
+            idSpan.textContent = `#${String(data.id).padStart(4, "0")}`;
+
+            const sizeSpan = document.createElement("span");
+            sizeSpan.className = "size";
+            // 显示宽高信息，更显“大数据”细节
+            sizeSpan.textContent = `${data.width}×${data.height}`;
+
+            info.appendChild(idSpan);
+            info.appendChild(sizeSpan);
+
+            card.appendChild(img);
+            card.appendChild(info);
+            fragment.appendChild(card);
+          });
+
+          waterfall.appendChild(fragment);
+
+          // 更新计数器
+          const totalCards = document.querySelectorAll(".card").length;
+          counterSpan.textContent = totalCards;
+        }
+
+        // ---------- 加载更多 (核心) ----------
+        function loadMore() {
+          if (isLoading) return;
+          isLoading = true;
+
+          // 模拟异步大数据加载 (加上延迟，更有真实感)
+          const loadBtn = document.getElementById("loadMoreBtn");
+          loadBtn.textContent = "⏳ 加载中...";
+          loadBtn.disabled = true;
+          loadBtn.style.opacity = "0.7";
+
+          setTimeout(() => {
+            // 生成一批新数据 (动态计算)
+            const newCards = generateBatch(CONFIG.BATCH_SIZE);
+            // 渲染
+            renderCards(newCards);
+
+            // 恢复按钮
+            loadBtn.textContent = "⚡ 加载更多";
+            loadBtn.disabled = false;
+            loadBtn.style.opacity = "1";
+            isLoading = false;
+
+            // 炫彩小反馈: 按钮闪一下
+            loadBtn.style.transform = "scale(0.96)";
+            setTimeout(() => {
+              loadBtn.style.transform = "";
+            }, 120);
+
+            console.log(
+              `[瀑布流] 已加载 ${document.querySelectorAll(".card").length} 张卡片`,
+            );
+          }, 400); // 模拟网络延迟，展现动态计算过程
+        }
+
+        // ---------- 初始化: 首屏加载 2批，制造丰富感 ----------
+        function init() {
+          // 首批加载 2 批 (视觉丰富)
+          const firstBatch = generateBatch(CONFIG.BATCH_SIZE);
+          renderCards(firstBatch);
+
+          // 再追加一批 (让首屏就有很多卡片，体现大数据)
+          setTimeout(() => {
+            const secondBatch = generateBatch(CONFIG.BATCH_SIZE);
+            renderCards(secondBatch);
+            // 计数器更新在 render 里已经做了
+          }, 100);
+
+          // 绑定按钮事件
+          document
+            .getElementById("loadMoreBtn")
+            .addEventListener("click", loadMore);
+
+          // 滚动加载 (可选) —— 高级体验：滚动到底部自动加载
+          // 使用 Intersection Observer 监听最后一个卡片
+          const observer = new IntersectionObserver(
+            (entries) => {
+              if (entries.some((entry) => entry.isIntersecting)) {
+                // 当最后一个卡片进入视口，触发加载
+                loadMore();
+              }
+            },
+            {
+              rootMargin: "0px 0px 200px 0px", // 提前200px触发
+              threshold: 0.1,
+            },
+          );
+
+          // 监听瀑布流变化，重新绑定最后一个卡片
+          function observeLastCard() {
+            const cards = waterfall.querySelectorAll(".card");
+            if (cards.length > 0) {
+              const lastCard = cards[cards.length - 1];
+              observer.observe(lastCard);
+            }
+          }
+
+          // 初次绑定
+          setTimeout(observeLastCard, 300);
+
+          // 每次加载更多后，重新绑定最后一个卡片 (renderCards后)
+          const origRender = renderCards;
+          renderCards = function (cardsData) {
+            origRender(cardsData);
+            // 重新绑定最后一个卡片
+            setTimeout(observeLastCard, 50);
+          };
+          // 覆盖原函数，使后续加载也绑定 observer
+          window.renderCards = renderCards; // 为保持一致性
+
+          // 额外：点击加载更多后，observer自动重新绑定
+          const origLoad = loadMore;
+          loadMore = function () {
+            origLoad.call(this);
+            // loadMore 内部异步，但 render 后 observer 会通过重写的 renderCards 绑定
+          };
+          window.loadMore = loadMore;
+        }
+
+        // 启动
+        init();
+
+        // 暴露一些变量方便调试 (非必须)
+        console.log(
+          "✨ 炫彩瀑布流已启动! 点击“加载更多”或滚动到底部自动加载。",
+        );
+      })();
+    </script>
+
+    <!-- 页脚装饰 (纯视觉) -->
+    <div
+      style="
+        margin-top: 10px;
+        padding: 18px;
+        color: rgba(255, 255, 255, 0.1);
+        font-size: 0.7rem;
+        letter-spacing: 6px;
+        border-top: 1px solid rgba(255, 255, 255, 0.02);
+      "
+    >
+      ✦ 动态计算 · 大数据渲染 ✦
+    </div>
+  </body>
+</html>

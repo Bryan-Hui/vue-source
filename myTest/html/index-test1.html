@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      .box {
+        width: 100px;
+        height: 200px;
+        border: 2px solid red;
+        padding: 12px;
+        box-sizing: content-box;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="box"></div>
+  </body>
+  <script>
+    const ele = document.querySelector(".box");
+
+    console.log(ele.offsetHeight, ele.offsetWidth, ele.getBoundingClientRect());
+  </script>
+</html>

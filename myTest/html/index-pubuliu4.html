@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>瀑布流 Mock 数据</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        background: #111;
+        color: #eee;
+        font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+        padding: 30px;
+      }
+      h2 {
+        margin-bottom: 16px;
+        color: #4facfe;
+      }
+      pre {
+        background: #1a1a2e;
+        padding: 20px;
+        border-radius: 10px;
+        overflow-x: auto;
+        font-size: 13px;
+        line-height: 1.6;
+        max-height: 600px;
+        overflow-y: auto;
+      }
+      .btn {
+        padding: 12px 32px;
+        background: linear-gradient(135deg, #f093fb, #4facfe);
+        border: none;
+        border-radius: 30px;
+        color: #fff;
+        font-weight: 700;
+        cursor: pointer;
+        margin: 10px 10px 10px 0;
+      }
+      .btn:hover {
+        opacity: 0.85;
+      }
+      .info {
+        color: #888;
+        font-size: 14px;
+        margin-bottom: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>📦 瀑布流 Mock 数据生成器</h2>
+    <p class="info">
+      打开控制台查看 <code>window.mockData</code>，或点击按钮打印 JSON
+    </p>
+
+    <button class="btn" onclick="printData()">🖨 打印 JSON 到页面</button>
+    <button class="btn" onclick="regenerate()">🔄 重新生成</button>
+    <pre id="output">点击上方按钮查看数据...</pre>
+
+    <script>
+      // ============================================================
+      //  瀑布流 Mock 数据生成器
+      //  所有数据随机生成，每次刷新页面都不一样
+      //  数据挂在 window.mockData 上，可直接在控制台使用
+      // ============================================================
+
+      const CONFIG = {
+        // picsum 图片服务，seed 不同则图片不同
+        imageBase: "https://picsum.photos/seed/",
+        // 图片基准宽度
+        imageWidth: 600,
+        // 宽高比池 (宽/高)，值越小图片越高
+        ratios: [
+          0.5, 0.6, 0.7, 0.75, 0.8, 0.85, 0.9, 1.0, 1.1, 1.2, 1.33, 1.5, 1.6,
+        ],
+        // 分类标签
+        tags: ["tech", "design", "life", "photo", "travel", "food"],
+        tagLabels: {
+          tech: "技术",
+          design: "设计",
+          life: "生活",
+          photo: "摄影",
+          travel: "旅行",
+          food: "美食",
+        },
+        // 不定长标题池 (从短到长)
+        titles: [
+          "日落",
+          "老街",
+          "咖啡与书",
+          "代码之美",
+          "山海之间",
+          "深夜的灯火",
+          "一杯拿铁的午后",
+          "晨曦中的城市天际线",
+          "霓虹灯下的雨夜街角",
+          "极简设计中的留白艺术",
+          "秋天的第一片银杏叶落了",
+          "星空下的帐篷和篝火晚会",
+          "那些年我们一起追过的代码规范",
+          "如何在繁忙都市中找到片刻宁静",
+          "从零开始构建一个微前端架构的实践与思考",
+          "JavaScript 异步编程从回调到 async/await 的演进之路",
+          "在喜马拉雅山脚下喝茶是一种什么样的体验",
+          "React vs Vue：前端框架选型之我见与项目实战对比",
+          "深夜食堂里的一碗拉面，温暖了整个冬天的回忆",
+        ],
+        // 作者池
+        authors: [
+          "张小凡",
+          "李大嘴",
+          "王小花",
+          "赵铁柱",
+          "陈美丽",
+          "刘星辰",
+          "周游",
+          "吴所谓",
+          "郑能量",
+          "钱多多",
+        ],
+        // 点赞数范围
+        likesRange: [10, 9999],
+        // 评论数范围
+        commentsRange: [0, 500],
+      };
+
+      // ---- 工具函数 ----
+      function randomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+      function randomPick(arr) {
+        return arr[Math.floor(Math.random() * arr.length)];
+      }
+      function formatNum(n) {
+        if (n >= 10000) return (n / 10000).toFixed(1) + "w";
+        if (n >= 1000) return (n / 1000).toFixed(1) + "k";
+        return String(n);
+      }
+
+      let cardId = 0;
+
+      /**
+       * 生成单条卡片数据
+       * @returns {Object} 包含图片、标题、标签、作者、互动数据等
+       */
+      function generateCard() {
+        const ratio = randomPick(CONFIG.ratios);
+        const imgHeight = Math.round(CONFIG.imageWidth / ratio);
+        const seed = `card_${cardId}_${Math.random().toString(36).slice(2, 8)}`;
+        const imgUrl = `${CONFIG.imageBase}${seed}/${CONFIG.imageWidth}/${imgHeight}`;
+        const tag = randomPick(CONFIG.tags);
+        const title = randomPick(CONFIG.titles);
+        const author = randomPick(CONFIG.authors);
+        const likes = randomInt(...CONFIG.likesRange);
+        const comments = randomInt(...CONFIG.commentsRange);
+
+        return {
+          id: cardId++, // 自增 ID
+          imgUrl, // 图片 URL
+          imgWidth: CONFIG.imageWidth, // 图片宽度
+          imgHeight, // 图片高度 (根据宽高比计算)
+          ratio, // 宽高比
+          title, // 标题 (不定长)
+          tag, // 分类 key
+          tagLabel: CONFIG.tagLabels[tag], // 分类中文名
+          author, // 作者
+          likes, // 点赞数
+          likesStr: formatNum(likes), // 点赞数格式化
+          comments, // 评论数
+          commentsStr: formatNum(comments), // 评论数格式化
+          createTime: Date.now() - randomInt(0, 30 * 24 * 3600 * 1000), // 随机过去30天内
+        };
+      }
+
+      /**
+       * 批量生成卡片数据
+       * @param {number} count 数量
+       */
+      function generateBatch(count) {
+        const batch = [];
+        for (let i = 0; i < count; i++) {
+          batch.push(generateCard());
+        }
+        return batch;
+      }
+
+      // 生成 20 条初始数据，挂到全局
+      window.mockData = generateBatch(20);
+      window.generateBatch = generateBatch;
+      window.generateCard = generateCard;
+
+      console.log(
+        "✅ window.mockData 已就绪，共",
+        window.mockData.length,
+        "条数据",
+      );
+      console.log("💡 使用 window.generateBatch(10) 生成更多数据");
+      console.log("💡 使用 window.generateCard() 生成单条数据");
+      console.log(window.mockData);
+
+      // ---- 页面交互 ----
+      function printData() {
+        document.getElementById("output").textContent = JSON.stringify(
+          window.mockData,
+          null,
+          2,
+        );
+      }
+      function regenerate() {
+        cardId = 0;
+        window.mockData = generateBatch(20);
+        document.getElementById("output").textContent = JSON.stringify(
+          window.mockData,
+          null,
+          2,
+        );
+        console.log("🔄 已重新生成数据，共", window.mockData.length, "条");
+      }
+      // 首次自动打印
+      printData();
+    </script>
+  </body>
+</html>

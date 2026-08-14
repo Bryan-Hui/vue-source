@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZRender 雷达图</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #1a1a2e; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    #zrender-container { width: 600px; height: 520px; background: #16213e; border-radius: 12px; }
+  </style>
+</head>
+<body>
+  <div id="zrender-container"></div>
+</body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/zrender/6.1.0/zrender.min.js"></script>
+<script>
+  const dom = document.getElementById('zrender-container');
+  const zr = zrender.init(dom, {
+    renderer: 'canvas',
+    useDirtyRect: false,
+    width: dom.offsetWidth,
+    height: dom.offsetHeight
+  });
+
+  const W = dom.offsetWidth;
+  const H = dom.offsetHeight;
+  const cx = W / 2;
+  const cy = H / 2 + 10;
+  const maxRadius = 180;
+
+  // ---- 数据定义 ----
+  // 6 个维度的标签和两组数据
+  const labels = ['速度', '力量', '防御', '魔法', '生命', '敏捷'];
+  const data1 = [0.85, 0.6, 0.9, 0.7, 0.5, 0.8];   // 数据集 A (红色)
+  const data2 = [0.5, 0.8, 0.55, 0.9, 0.75, 0.6];  // 数据集 B (蓝色)
+  const sides = labels.length; // 6 边形
+
+  // ---- 工具函数：根据角度和半径计算坐标 ----
+  function getPoint(index, radius) {
+    const angle = (Math.PI * 2 / sides) * index - Math.PI / 2;
+    return {
+      x: cx + Math.cos(angle) * radius,
+      y: cy + Math.sin(angle) * radius
+    };
+  }
+
+  // ---- 1. 绘制网格（5 层同心多边形 + 轴线） ----
+  const gridLevels = 5;
+  for (let level = 1; level <= gridLevels; level++) {
+    const r = (maxRadius / gridLevels) * level;
+    const points = [];
+    for (let i = 0; i < sides; i++) {
+      const p = getPoint(i, r);
+      points.push(p.x, p.y);
+    }
+    const polygon = new zrender.Polygon({
+      shape: { points: points },
+      style: {
+        fill: 'transparent',
+        stroke: level === gridLevels ? 'rgba(100, 180, 255, 0.7)' : 'rgba(100, 180, 255, 0.25)',
+        lineWidth: level === gridLevels ? 2 : 1
+      },
+      zlevel: 1
+    });
+    zr.add(polygon);
+  }
+
+  // 轴线（从中心到每个顶点）
+  for (let i = 0; i < sides; i++) {
+    const p = getPoint(i, maxRadius);
+    const line = new zrender.Line({
+      shape: { x1: cx, y1: cy, x2: p.x, y2: p.y },
+      style: { stroke: 'rgba(100, 180, 255, 0.25)', lineWidth: 1 },
+      zlevel: 1
+    });
+    zr.add(line);
+  }
+
+  // ---- 2. 绘制数据区域（两个数据集） ----
+  function drawDataArea(data, fillColor, strokeColor, zlevel) {
+    const points = [];
+    for (let i = 0; i < sides; i++) {
+      const p = getPoint(i, maxRadius * data[i]);
+      points.push(p.x, p.y);
+    }
+    const polygon = new zrender.Polygon({
+      shape: { points: points },
+      style: {
+        fill: fillColor,
+        stroke: strokeColor,
+        lineWidth: 2
+      },
+      zlevel: zlevel
+    });
+    zr.add(polygon);
+
+    // 数据点圆点
+    for (let i = 0; i < sides; i++) {
+      const p = getPoint(i, maxRadius * data[i]);
+      const dot = new zrender.Circle({
+        shape: { cx: p.x, cy: p.y, r: 5 },
+        style: {
+          fill: strokeColor,
+          stroke: '#fff',
+          lineWidth: 2
+        },
+        zlevel: zlevel + 1
+      });
+      zr.add(dot);
+    }
+  }
+
+  drawDataArea(data2, 'rgba(77, 150, 255, 0.2)', '#4d96ff', 3);
+  drawDataArea(data1, 'rgba(255, 107, 107, 0.25)', '#ff6b6b', 5);
+
+  // ---- 3. 标签文字 ----
+  for (let i = 0; i < sides; i++) {
+    const p = getPoint(i, maxRadius + 32);
+    const text = new zrender.Text({
+      style: {
+        text: labels[i],
+        x: p.x,
+        y: p.y,
+        textAlign: 'center',
+        textVerticalAlign: 'middle',
+        fontSize: 13,
+        fontWeight: 'bold',
+        fill: '#a0c4ff',
+        fontFamily: 'Arial, sans-serif'
+      },
+      zlevel: 10
+    });
+    zr.add(text);
+  }
+
+  // ---- 4. 刻度值标签（最外层网格每个顶点旁） ----
+  for (let i = 0; i < sides; i++) {
+    const p = getPoint(i, maxRadius);
+    const innerP = getPoint(i, maxRadius - 18);
+    const scaleText = new zrender.Text({
+      style: {
+        text: '100',
+        x: innerP.x,
+        y: innerP.y,
+        textAlign: 'center',
+        textVerticalAlign: 'middle',
+        fontSize: 10,
+        fill: 'rgba(160, 196, 255, 0.5)',
+        fontFamily: 'Arial, sans-serif'
+      },
+      zlevel: 2
+    });
+    zr.add(scaleText);
+  }
+
+  // ---- 5. 图例 ----
+  const legendY = H - 30;
+  const legendDot1 = new zrender.Circle({
+    shape: { cx: cx - 40, cy: legendY, r: 5 },
+    style: { fill: '#ff6b6b' },
+    zlevel: 10
+  });
+  const legendText1 = new zrender.Text({
+    style: {
+      text: '角色 A',
+      x: cx - 28,
+      y: legendY,
+      textAlign: 'left',
+      textVerticalAlign: 'middle',
+      fontSize: 12,
+      fill: '#ccc',
+      fontFamily: 'Arial, sans-serif'
+    },
+    zlevel: 10
+  });
+  zr.add(legendDot1);
+  zr.add(legendText1);
+
+  const legendDot2 = new zrender.Circle({
+    shape: { cx: cx + 30, cy: legendY, r: 5 },
+    style: { fill: '#4d96ff' },
+    zlevel: 10
+  });
+  const legendText2 = new zrender.Text({
+    style: {
+      text: '角色 B',
+      x: cx + 42,
+      y: legendY,
+      textAlign: 'left',
+      textVerticalAlign: 'middle',
+      fontSize: 12,
+      fill: '#ccc',
+      fontFamily: 'Arial, sans-serif'
+    },
+    zlevel: 10
+  });
+  zr.add(legendDot2);
+  zr.add(legendText2);
+
+  // ---- 6. 标题 ----
+  const title = new zrender.Text({
+    style: {
+      text: '角色能力雷达图',
+      x: cx,
+      y: 20,
+      textAlign: 'center',
+      textVerticalAlign: 'middle',
+      fontSize: 18,
+      fontWeight: 'bold',
+      fill: '#e0e0e0',
+      fontFamily: 'Arial, sans-serif'
+    },
+    zlevel: 10
+  });
+  zr.add(title);
+</script>
+</html>

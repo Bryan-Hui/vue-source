@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div id="app"></div>
+</body>
+<script src="../../dist/vue.js"></script>
+<script>
+    // debugger
+    const vm = new Vue({
+        el: '#app',
+        data: {
+            name: '服务机构',
+            age: 18
+        },
+        template: `
+            <div>{{name}}</div>
+        `
+    })
+
+
+    console.log('vm instance',vm)
+</script>
+</html>

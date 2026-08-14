@@ -1,0 +1,223 @@
+<!doctype html>
+<html>
+  <head>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      .grid-container {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px; /* 间隙完全相等 */
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        position: relative;
+      }
+
+      .grid-item {
+        background: #f0f0f0;
+        padding: 20px;
+        border-radius: 8px;
+        font-size: 18px;
+        /* 高度由内容决定，不设置固定高度 */
+        transition: all 0.3s ease;
+      }
+
+      /* 不同颜色便于观察 */
+      .grid-item:nth-child(6n + 1) {
+        background: #ffd;
+      }
+      .grid-item:nth-child(6n + 2) {
+        background: #dfd;
+      }
+      .grid-item:nth-child(6n + 3) {
+        background: #ddf;
+      }
+      .grid-item:nth-child(6n + 4) {
+        background: #fdd;
+      }
+      .grid-item:nth-child(6n + 5) {
+        background: #dff;
+      }
+      .grid-item:nth-child(6n + 6) {
+        background: #fdf;
+      }
+
+      /* 加载更多按钮 */
+      .load-more {
+        display: block;
+        margin: 20px auto;
+        padding: 15px 40px;
+        font-size: 18px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+
+      .load-more:hover {
+        background: #0056b3;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="grid-container" id="grid"></div>
+    <button class="load-more" id="loadMore">加载更多</button>
+
+    <script>
+      class WaterfallGrid {
+        constructor(containerId, options = {}) {
+          this.container = document.getElementById(containerId);
+          this.columns = options.columns || 3; // 列数
+          this.gap = options.gap || 20; // 间隙
+          this.items = []; // 存储所有卡片数据
+          this.columnHeights = new Array(this.columns).fill(0); // 每列当前高度
+          this.itemPositions = []; // 存储每个卡片的位置信息
+
+          // 创建列容器（用于计算高度）
+          this.createColumnWrappers();
+        }
+
+        // 创建隐藏的列容器来测量真实高度
+        createColumnWrappers() {
+          this.columnWrappers = [];
+          for (let i = 0; i < this.columns; i++) {
+            const wrapper = document.createElement("div");
+            wrapper.style.cssText = `
+        position: absolute;
+        visibility: hidden;
+        width: ${100 / this.columns}%;
+        padding: 0 ${this.gap / 2}px;
+        pointer-events: none;
+      `;
+            this.container.appendChild(wrapper);
+            this.columnWrappers.push(wrapper);
+          }
+        }
+
+        // 添加数据
+        addItems(newItems) {
+          this.items = [...this.items, ...newItems];
+          this.render();
+        }
+
+        // 渲染所有卡片
+        render() {
+          // 清空容器（保留列包装器）
+          const wrappers = this.columnWrappers;
+          this.container.innerHTML = "";
+          wrappers.forEach((w) => this.container.appendChild(w));
+
+          // 重置列高度
+          this.columnHeights = new Array(this.columns).fill(0);
+          this.itemPositions = [];
+
+          // 构建所有卡片
+          this.items.forEach((item, index) => {
+            // 创建卡片元素
+            const card = document.createElement("div");
+            card.className = "grid-item";
+            card.textContent = item;
+            card.dataset.index = index;
+
+            // 先放到隐藏包装器中测量高度
+            const wrapper = this.columnWrappers[0];
+            wrapper.appendChild(card);
+
+            // 获取真实高度
+            const height = card.offsetHeight;
+
+            // 找到最短列
+            const minHeight = Math.min(...this.columnHeights);
+            const columnIndex = this.columnHeights.indexOf(minHeight);
+
+            // 从隐藏包装器中移除
+            wrapper.removeChild(card);
+
+            // 计算位置
+            const top = this.columnHeights[columnIndex];
+            const left = columnIndex * (100 / this.columns);
+
+            // 存储位置信息
+            this.itemPositions.push({
+              column: columnIndex,
+              top: top,
+              height: height,
+            });
+
+            // 更新列高度
+            this.columnHeights[columnIndex] += height + this.gap;
+
+            // 设置卡片位置（使用 grid-row 和 grid-column）
+            const rowStart = Math.floor(top / (this.gap + 1)) + 1;
+            const rowEnd = rowStart + Math.ceil(height / (this.gap + 1)) + 1;
+
+            card.style.cssText = `
+        grid-column: ${columnIndex + 1};
+        grid-row: ${rowStart} / ${rowEnd};
+        margin: 0;
+      `;
+
+            // 添加到容器
+            this.container.appendChild(card);
+          });
+
+          // 设置容器高度
+          const maxHeight = Math.max(...this.columnHeights);
+          this.container.style.height = maxHeight + "px";
+
+          // 移除隐藏包装器
+          wrappers.forEach((w) => w.remove());
+        }
+
+        // 清空所有数据
+        clear() {
+          this.items = [];
+          this.columnHeights = new Array(this.columns).fill(0);
+          this.itemPositions = [];
+          this.container.innerHTML = "";
+        }
+      }
+
+      // ============ 使用示例 ============
+
+      // 生成随机高度的数据
+      function generateRandomData(count) {
+        const items = [];
+        const heights = [
+          "短内容",
+          "中等长度内容",
+          "比较长的内容会占用更多高度",
+          "非常非常非常长的内容，会占用很多行，导致卡片高度很高",
+          "短",
+          "中等",
+        ];
+        for (let i = 0; i < count; i++) {
+          const randomHeight =
+            heights[Math.floor(Math.random() * heights.length)];
+          items.push(`#${items.length + 1} ${randomHeight}`);
+        }
+        return items;
+      }
+
+      // 初始化瀑布流
+      const grid = new WaterfallGrid("grid", {
+        columns: 3,
+        gap: 20,
+      });
+
+      // 初始加载 12 条数据
+      grid.addItems(generateRandomData(12));
+
+      // 加载更多
+      document.getElementById("loadMore").addEventListener("click", () => {
+        grid.addItems(generateRandomData(6));
+      });
+    </script>
+  </body>
+</html>

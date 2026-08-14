@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>动态计算瀑布流</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+        min-height: 100vh;
+        font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+        padding: 20px;
+        overflow-x: hidden;
+      }
+
+      /* 头部 */
+      .header {
+        text-align: center;
+        padding: 30px 0;
+      }
+      .header h1 {
+        font-size: 2.4rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #f093fb, #f5576c, #4facfe, #43e97b);
+        background-size: 300% 300%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: gradShift 5s ease-in-out infinite alternate;
+      }
+      @keyframes gradShift {
+        0% {
+          background-position: 0% 50%;
+        }
+        100% {
+          background-position: 100% 50%;
+        }
+      }
+      .header .sub {
+        color: rgba(255, 255, 255, 0.45);
+        font-size: 0.9rem;
+        letter-spacing: 3px;
+        margin-top: 4px;
+      }
+
+      /* 瀑布流容器 */
+      .waterfall-wrap {
+        width: 100%;
+        max-width: 1300px;
+        margin: 0 auto;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .waterfall {
+        column-count: 4;
+        column-gap: 16px;
+        width: 100%;
+      }
+
+      /* 卡片 */
+      .card {
+        break-inside: avoid;
+        margin-bottom: 20px;
+        border-radius: 16px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.06);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+        transition:
+          transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+          box-shadow 0.35s ease;
+        cursor: pointer;
+        animation: cardFadeIn 0.5s ease forwards;
+        opacity: 0;
+      }
+
+      @keyframes cardFadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(30px) scale(0.92);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      .card:hover {
+        transform: translateY(-8px) scale(1.03);
+        box-shadow:
+          0 20px 50px rgba(0, 0, 0, 0.5),
+          0 0 0 1px rgba(255, 255, 255, 0.2);
+        z-index: 10;
+      }
+
+      /* 卡片图片 */
+      .card-img {
+        width: 100%;
+        display: block;
+        object-fit: cover;
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+      }
+
+      /* 卡片底部信息 */
+      .card-body {
+        padding: 14px 16px;
+        color: #e0e0e0;
+      }
+      .card-body .title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #fff;
+        margin-bottom: 6px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        line-height: 1.4;
+      }
+      .card-body .meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.5);
+      }
+      .card-body .tag {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+      }
+      .tag-tech {
+        background: rgba(79, 172, 254, 0.2);
+        color: #8ab9ff;
+      }
+      .tag-design {
+        background: rgba(240, 147, 251, 0.2);
+        color: #f0a0fb;
+      }
+      .tag-life {
+        background: rgba(67, 233, 123, 0.2);
+        color: #5eea9b;
+      }
+      .tag-photo {
+        background: rgba(245, 87, 108, 0.2);
+        color: #f5909b;
+      }
+
+      /* 加载按钮 */
+      .btn-wrap {
+        display: flex;
+        justify-content: center;
+        padding: 30px 0 50px;
+      }
+      .load-more {
+        padding: 14px 48px;
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: #fff;
+        background: linear-gradient(135deg, #f093fb, #f5576c, #4facfe);
+        background-size: 250% 250%;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        box-shadow: 0 6px 24px rgba(245, 87, 108, 0.35);
+        transition: all 0.3s ease;
+        animation: btnGrad 4s ease-in-out infinite alternate;
+      }
+      @keyframes btnGrad {
+        0% {
+          background-position: 0% 50%;
+        }
+        100% {
+          background-position: 100% 50%;
+        }
+      }
+      .load-more:hover {
+        transform: translateY(-3px) scale(1.04);
+        box-shadow: 0 12px 36px rgba(79, 172, 254, 0.5);
+      }
+      .load-more:active {
+        transform: scale(0.96);
+      }
+      .load-more:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .counter {
+        text-align: center;
+        color: rgba(255, 255, 255, 0.35);
+        font-size: 0.85rem;
+        letter-spacing: 2px;
+        margin-top: 10px;
+      }
+      .counter span {
+        color: #b9cdff;
+        font-weight: 700;
+      }
+
+      /* 响应式 */
+      @media (max-width: 1100px) {
+        .waterfall {
+          column-count: 3;
+        }
+      }
+      @media (max-width: 900px) {
+        .header h1 {
+          font-size: 1.8rem;
+        }
+      }
+      @media (max-width: 700px) {
+        .waterfall {
+          column-count: 2;
+        }
+      }
+      @media (max-width: 600px) {
+        .header h1 {
+          font-size: 1.4rem;
+        }
+      }
+      @media (max-width: 450px) {
+        .waterfall {
+          column-count: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>✦ 动态计算瀑布流 ✦</h1>
+      <div class="sub">CSS COLUMNS · 流式布局 · 自动排列</div>
+    </div>
+
+    <div class="waterfall-wrap">
+      <div id="waterfall" class="waterfall"></div>
+    </div>
+
+    <div class="btn-wrap">
+      <button id="loadMoreBtn" class="load-more">⚡ 加载更多</button>
+    </div>
+    <div class="counter">🧩 卡片 <span id="cardCount">0</span></div>
+
+    <script>
+      (function () {
+        "use strict";
+
+        // ==================== 配置 ====================
+        const CONFIG = {
+          columns: 4, // 列数
+          gap: 16, // 卡片间距
+          cardWidth: 0, // 由 JS 动态计算
+          batchSize: 8, // 每次加载数量
+          // 图片池 (使用 picsum 随机图片)
+          imageBase: "https://picsum.photos/seed/",
+          imageWidth: 600,
+          // 图片宽高比池 (宽/高)，值越小卡片越高
+          ratios: [
+            0.65, 0.8, 1.0, 1.2, 1.4, 0.7, 0.9, 0.55, 1.1, 1.5, 0.75, 0.85,
+          ],
+          tags: ["tech", "design", "life", "photo"],
+          tagLabels: {
+            tech: "技术",
+            design: "设计",
+            life: "生活",
+            photo: "摄影",
+          },
+          tagClasses: {
+            tech: "tag-tech",
+            design: "tag-design",
+            life: "tag-life",
+            photo: "tag-photo",
+          },
+          titles: [
+            "晨曦中的城市天际线",
+            "深夜代码的浪漫",
+            "山海之间的孤独旅人",
+            "一杯咖啡的午后时光",
+            "霓虹灯下的街角",
+            "极简设计的艺术",
+            "秋天的第一片落叶",
+            "雨后的清新空气",
+            "星空下的帐篷",
+            "老街的烟火气",
+            "科技与人文的交汇",
+            "窗台上的多肉植物",
+            "海边的日出",
+            "深夜食堂的温暖",
+            "雪山之巅的壮丽",
+            "城市地铁的匆匆",
+            "樱花树下的约定",
+            "旧书店的时光",
+            "极光下的奇迹",
+            "繁忙港口的黄昏",
+          ],
+        };
+
+        // ==================== 状态 ====================
+        let cardId = 0;
+        let isLoading = false;
+        const waterfall = document.getElementById("waterfall");
+        const loadBtn = document.getElementById("loadMoreBtn");
+        const countSpan = document.getElementById("cardCount");
+
+        // ==================== 工具函数 ====================
+        function randomPick(arr) {
+          return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        // 生成单张卡片数据
+        function generateCardData() {
+          const ratio = randomPick(CONFIG.ratios);
+          const imgHeight = Math.round(CONFIG.imageWidth / ratio);
+          const seed = `wf_${cardId}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+          const imgUrl = `${CONFIG.imageBase}${seed}/${CONFIG.imageWidth}/${imgHeight}`;
+          const tag = randomPick(CONFIG.tags);
+          const title = randomPick(CONFIG.titles);
+          return {
+            id: cardId++,
+            ratio,
+            imgUrl,
+            imgWidth: CONFIG.imageWidth,
+            imgHeight,
+            tag,
+            title,
+          };
+        }
+
+        function generateBatch(count) {
+          const batch = [];
+          for (let i = 0; i < count; i++) {
+            batch.push(generateCardData());
+          }
+          return batch;
+        }
+
+        /**
+         * 渲染卡片 —— CSS columns 流式布局，浏览器自动排列
+         */
+        function renderCards(cardsData) {
+          if (!cardsData || cardsData.length === 0) return;
+
+          const fragment = document.createDocumentFragment();
+
+          cardsData.forEach((data, index) => {
+            const card = document.createElement("div");
+            card.className = "card";
+            // 按顺序错开动画
+            card.style.animationDelay = index * 0.05 + "s";
+
+            const img = document.createElement("img");
+            img.className = "card-img";
+            img.src = data.imgUrl;
+            img.alt = data.title;
+            img.loading = "lazy";
+
+            const body = document.createElement("div");
+            body.className = "card-body";
+            body.innerHTML = `
+          <div class="title">${data.title}</div>
+          <div class="meta">
+            <span class="tag ${CONFIG.tagClasses[data.tag]}">${CONFIG.tagLabels[data.tag]}</span>
+            <span>#${String(data.id).padStart(4, "0")}</span>
+          </div>
+        `;
+
+            card.appendChild(img);
+            card.appendChild(body);
+            fragment.appendChild(card);
+          });
+
+          waterfall.appendChild(fragment);
+
+          // 更新计数器
+          const totalCards = waterfall.querySelectorAll(".card").length;
+          countSpan.textContent = totalCards;
+        }
+
+        // ==================== 加载更多 ====================
+        function loadMore() {
+          if (isLoading) return;
+
+          isLoading = true;
+          loadBtn.textContent = "⏳ 加载中...";
+          loadBtn.disabled = true;
+
+          setTimeout(() => {
+            const newCards = generateBatch(CONFIG.batchSize);
+            renderCards(newCards);
+
+            loadBtn.textContent = "⚡ 加载更多";
+            loadBtn.disabled = false;
+            isLoading = false;
+          }, 300);
+        }
+
+        // ==================== 初始化 ====================
+        function init() {
+          // 首屏加载 2 批
+          const batch1 = generateBatch(CONFIG.batchSize);
+          renderCards(batch1);
+
+          setTimeout(() => {
+            const batch2 = generateBatch(CONFIG.batchSize);
+            renderCards(batch2);
+          }, 150);
+
+          loadBtn.addEventListener("click", loadMore);
+
+          // 滚动自动加载 (IntersectionObserver)
+          const sentinel = document.createElement("div");
+          sentinel.id = "sentinel";
+          sentinel.style.cssText = "width:100%;height:1px;pointer-events:none;";
+          waterfall.appendChild(sentinel);
+
+          const observer = new IntersectionObserver(
+            (entries) => {
+              if (entries.some((e) => e.isIntersecting)) {
+                loadMore();
+              }
+            },
+            { rootMargin: "0px 0px 200px 0px" },
+          );
+
+          function observeSentinel() {
+            const s = document.getElementById("sentinel");
+            if (s) observer.observe(s);
+          }
+
+          observeSentinel();
+
+          // 每次 DOM 变化后重新绑定 sentinel
+          const origRender = renderCards;
+          renderCards = function (cardsData) {
+            origRender(cardsData);
+            const s = document.getElementById("sentinel");
+            if (s) {
+              waterfall.appendChild(s);
+              observer.unobserve(s);
+              observer.observe(s);
+            }
+          };
+        }
+
+        init();
+
+        console.log("✅ CSS 流式瀑布流已启动！列数:", CONFIG.columns);
+      })();
+    </script>
+  </body>
+</html>
