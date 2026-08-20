@@ -3,19 +3,144 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>测试 init.js 41-45行</title>
 </head>
 <body>
-  <div id="app">{{msg}}</div>
+  <h3>测试 init.js 41-45行：_isComponent 分支逻辑</h3>
+  <div id="app">
+    <p>根实例 msg: {{msg}}</p>
+    <my-comp></my-comp>
+  </div>
+
+  <hr>
+  <h3>控制台输出说明：</h3>
+  <pre>
+/* ============================================
+ * 测试 init.js 第41-45行代码：
+ *
+ *   if (options && options._isComponent) {
+ *     // 分支A：内部组件实例化 → initInternalComponent
+ *     initInternalComponent(vm, options)
+ *   } else {
+ *     // 分支B：new Vue() 或 new SubVue() → mergeOptions
+ *     vm.$options = mergeOptions(
+ *       resolveConstructorOptions(vm.constructor),
+ *       options || {},
+ *       vm
+ *     )
+ *   }
+ *
+ * 说明：
+ * 1. _isComponent 是 Vue 内部标志，在 patch 过程中创建
+ *    组件 VNode 时由 createComponentInstanceForVnode 设置
+ * 2. 用户直接 new Vue() 或 new SubVue() 时，_isComponent 为 undefined
+ * 3. 组件在模板中被使用时，Vue 内部会设置 _isComponent = true
+ * ============================================ */
+  </pre>
 </body>
 <script src="../../dist/vue.js"></script>
 <script>
+  console.log('========== 测试1：new Vue() 根实例 ==========')
+
+  // 测试1：根实例 new Vue()
+  // 此时 options = { el: '#app', data: {...}, components: {...} }
+  // options._isComponent === undefined → 走 else 分支 (第44行)
+  // resolveConstructorOptions(vm.constructor) → vm.constructor = Vue
+  // Vue 没有 super 属性 → 直接返回 Vue.options
   const app = new Vue({
     el: '#app',
     data: {
       msg: 'Hello World!'
+    },
+    components: {
+      'my-comp': {
+        template: '<p>我是子组件: {{childMsg}}</p>',
+        data() {
+          return { childMsg: 'child data' }
+        }
+      }
     }
   })
 
+  console.log('根实例 vm.constructor === Vue:', app.constructor === Vue)
+  // Vue 没有 super 属性
+  console.log('Vue.super:', Vue.super)
+  // Vue.options 由 initGlobalAPI 初始化
+  // console.log('Vue.options 的 key:', Object.keys(Vue.options))
+  // console.log('Vue.options._base === Vue:', Vue.options._base === Vue)
+  // console.log('根实例 $options 合并结果:', Object.keys(app.$options))
+
+  // console.log('')
+  // console.log('========== 测试2：Vue.extend() 创建子类 ==========')
+
+  // 测试2：Vue.extend 创建子类构造函数
+  const SubVue = Vue.extend({
+    name: 'SubVueComp',
+    data() {
+      return { subMsg: 'from SubVue' }
+    },
+    template: '<div>{{subMsg}}</div>'
+  })
+
+  console.log('SubVue 是构造函数:', typeof SubVue)
+  console.log('SubVue.super === Vue:', SubVue.super === Vue)
+  console.log('SubVue.cid:', SubVue.cid)
+  console.log('SubVue.options.name:', SubVue.options.name)
+  console.log('SubVue.superOptions === Vue.options:', SubVue.superOptions === Vue.options)
+  console.log('SubVue.sealedOptions !== SubVue.options:', SubVue.sealedOptions !== SubVue.options)
+
+  // console.log('')
+  // console.log('========== 测试3：new SubVue() 实例化子类 ==========')
+
+  // 测试3：new SubVue() 实例化
+  // options._isComponent === undefined → 走 else 分支 (第44行)
+  // resolveConstructorOptions(SubVue) → Ctor = SubVue
+  // SubVue.super = Vue → 进入 if (Ctor.super) 分支
+  // superOptions = resolveConstructorOptions(Vue) = Vue.options
+  // cachedSuperOptions = SubVue.superOptions (extend时保存的快照)
+  // 因为 superOptions === cachedSuperOptions → 不重新合并，直接返回 SubVue.options
+  // const subInstance = new SubVue()
+  // console.log('subInstance.constructor === SubVue:', subInstance.constructor === SubVue)
+  // console.log('subInstance.$options.name:', subInstance.$options.name)
+  // console.log('subInstance.$options._base:', subInstance.$options._base)
+  // console.log('subInstance 是 Vue 实例:', subInstance instanceof Vue)
+
+  // console.log('')
+  // console.log('========== 测试4：Vue.component 全局注册后，子类 options 重新合并 ==========')
+
+  // 测试4：在 extend 之后，全局注册一个新组件
+  // 这会导致 Vue.options 发生变化
+  // Vue.component('global-comp', {
+  //   template: '<span>global</span>'
+  // })
+
+  // 此时 Vue.options.components 发生了变化（新增了 global-comp）
+  // 再 new SubVue() 时，resolveConstructorOptions 会检测到：
+  // superOptions (最新 Vue.options) !== cachedSuperOptions (SubVue.superOptions)
+  // → 触发重新合并：mergeOptions(superOptions, SubVue.extendOptions)
+  // const subInstance2 = new SubVue()
+  // console.log('全局注册组件后 SubVue.options.components 包含 global-comp:',
+  //   'global-comp' in subInstance2.$options.components)
+
+  // console.log('')
+  // console.log('========== 测试5：Vue.extend 的缓存机制 ==========')
+
+  // 测试5：相同 extendOptions 多次调用 Vue.extend 返回缓存结果
+  // const extendOpts = { name: 'CachedComp' }
+  // const Cached1 = Vue.extend(extendOpts)
+  // const Cached2 = Vue.extend(extendOpts)
+  // console.log('相同 extendOptions 返回同一构造函数:', Cached1 === Cached2)
+
+  // 注意：_Ctor 缓存是挂在 extendOptions 上的
+  // console.log('extendOptions._Ctor 是缓存对象:', typeof extendOpts._Ctor)
+  // console.log('缓存 key 是 Vue.cid:', extendOpts._Ctor[Vue.cid] === Cached1)
+
+  // console.log('')
+  // console.log('========== 总结 ==========')
+  // console.log('1. new Vue() → options._isComponent 未定义 → else 分支 → mergeOptions')
+  // console.log('2. new SubVue() → options._isComponent 未定义 → else 分支 → mergeOptions')
+  // console.log('3. 模板中 <my-comp/> → Vue 内部设置 _isComponent=true → if 分支 → initInternalComponent')
+  // console.log('4. resolveConstructorOptions 对根 Vue 直接返回 Vue.options')
+  // console.log('5. resolveConstructorOptions 对子类检查父类 options 是否变化，按需重新合并')
 </script>
 </html>

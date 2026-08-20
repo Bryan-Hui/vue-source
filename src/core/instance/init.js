@@ -15,7 +15,7 @@ let uid = 0  // 实例或组件的唯一id
 export function initMixin(Vue: Class<Component>) {
   Vue.prototype._init = function (options?: Object) {  //初始化实例或组件 参数是：options
     // console.log('initMixin')
-    console.log('initMixin ',this,this instanceof Vue)
+    console.log('initMixin ', this, this instanceof Vue)
     // debugger
     const vm: Component = this
     // a uid
@@ -52,7 +52,7 @@ export function initMixin(Vue: Class<Component>) {
     }
     // expose real self
     vm._self = vm
-    initLifecycle(vm) 
+    initLifecycle(vm)
     initEvents(vm)
     initRender(vm)
     callHook(vm, 'beforeCreate')
@@ -125,6 +125,7 @@ export function resolveConstructorOptions(Ctor: Class<Component>) {
 
   // 第 2 步：检查是否为子类（有 super 属性说明是通过 Vue.extend 创建的）
   // Ctor.super 指向父类构造函数，根 Vue 的 Ctor.super === undefined，不会进入此分支
+  console.log('resolveConstructorOptions 🦁', Ctor.super)
   if (Ctor.super) {
     // 第 3 步：递归获取父类最新的 options
     // 父类可能也是子类，所以需要递归到根 Vue
@@ -133,7 +134,7 @@ export function resolveConstructorOptions(Ctor: Class<Component>) {
     // 第 4 步：获取创建子类时缓存的父类 options 快照
     // cachedSuperOptions 是 Vue.extend 时保存的父类 options 快照
     const cachedSuperOptions = Ctor.superOptions
-
+    console.log('resolveConstructorOptions 🦖', Ctor, options, superOptions, cachedSuperOptions)
     // 第 5 步：比较快照与最新值，判断父类 options 是否发生了变化
     // 如果相同，说明父类 options 没变，直接返回缓存的 Ctor.options（不需要重新合并）
     // 如果不同，说明父类 options 发生了变化（例如通过 Vue.component() 全局注册了新组件）
