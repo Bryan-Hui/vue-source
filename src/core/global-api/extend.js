@@ -100,6 +100,7 @@ export function initExtend(Vue: GlobalAPI) {
  * this[key] => this._props[key]
  */
 function initProps(Comp) {
+
   const props = Comp.options.props
   for (const key in props) {
     proxy(Comp.prototype, `_props`, key)
