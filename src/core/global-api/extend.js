@@ -18,7 +18,6 @@ export function initExtend(Vue: GlobalAPI) {
    * 基于当前类（Super）创建并返回子类构造函数 Sub。
    */
   Vue.extend = function (extendOptions: Object): Function {
-    console.log('extend 🐲')
     extendOptions = extendOptions || {}
     const Super = this        // 当前父类：Vue 或其子类
     const SuperId = Super.cid // 父类唯一标识
@@ -100,7 +99,6 @@ export function initExtend(Vue: GlobalAPI) {
  * this[key] => this._props[key]
  */
 function initProps(Comp) {
-
   const props = Comp.options.props
   for (const key in props) {
     proxy(Comp.prototype, `_props`, key)

@@ -64,3 +64,17 @@ Vue.extend()
 // function f1(){
 
 // }
+
+
+const defData = {
+  _data: {
+    name: 'xx'
+  }
+}
+
+defData.get = function () {
+  console.log(this)
+  return this._data
+}
+
+defData.get()

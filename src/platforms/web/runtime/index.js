@@ -4,7 +4,7 @@ import Vue from 'core/index'
 import config from 'core/config'
 import { extend, noop } from 'shared/util'
 import { mountComponent } from 'core/instance/lifecycle'
-import { devtools, inBrowser } from 'core/util/index'
+import { devtools, inBrowser } from 'core/util/index'  //inBrowser  在 env.js 中定义的
 
 import {
   query,
