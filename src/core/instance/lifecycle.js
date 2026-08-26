@@ -30,7 +30,6 @@ export function setActiveInstance(vm: Component) {
 }
 
 export function initLifecycle (vm: Component) {
-  console.log('initLifecycle ',vm)
   const options = vm.$options
 
   // locate first non-abstract parent

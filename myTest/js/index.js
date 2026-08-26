@@ -66,15 +66,37 @@ Vue.extend()
 // }
 
 
-const defData = {
-  _data: {
-    name: 'xx'
-  }
-}
+// const defData = {
+//   _data: {
+//     name: 'xx'
+//   }
+// }
 
-defData.get = function () {
-  console.log(this)
-  return this._data
-}
+// defData.get = function () {
+//   console.log(this)
+//   return this._data
+// }
 
-defData.get()
+// defData.get()
+
+
+// const obj = {
+//   name: 'xx'
+// }
+
+// Object.defineProperty(obj, 'name', {
+//   value: 'yy',
+//   writable: false,
+//   enumerable: false,
+//   configurable: false
+// })
+
+// console.log(Object.getOwnPropertyDescriptor(obj, 'name'))
+// obj.name = 'zz'
+
+// console.log(obj.name)
+
+console.log(typeof window)
+
+
+

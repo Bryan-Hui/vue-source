@@ -21,9 +21,9 @@ export function initMixin(Vue: Class<Component>) {
 
     let startTag, endTag
     /* istanbul ignore if */
-    if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
-      startTag = `vue-perf-start:${vm._uid}`
-      endTag = `vue-perf-end:${vm._uid}`
+    if (process.env.NODE_ENV !== 'production' && config.performance && mark) {  //config.performance: 默认是false 是一个布尔值，表示是否开启性能追踪 mark 是一个函数，用于在性能追踪中标记时间点
+      startTag = `vue-perf-start:${vm._uid}` // 生成一个唯一的开始标记，格式为 vue-perf-start:uid
+      endTag = `vue-perf-end:${vm._uid}` // 生成一个唯一的结束标记，格式为 vue-perf-end:uid
       mark(startTag)
     }
 
@@ -41,6 +41,8 @@ export function initMixin(Vue: Class<Component>) {
         options || {}, // 传入的选项
         vm
       )
+
+      console.log('vm.$options == ', vm.$options)
     }
     /* istanbul ignore else */
     if (process.env.NODE_ENV !== 'production') {  // 非生产环境
@@ -59,13 +61,14 @@ export function initMixin(Vue: Class<Component>) {
     initProvide(vm) // resolve provide after data/props
     callHook(vm, 'created')
 
-    console.log('vm == ', vm)
-
     /* istanbul ignore if */
     if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
       vm._name = formatComponentName(vm, false)
       mark(endTag)
       measure(`vue ${vm._name} init`, startTag, endTag)
+
+      const entries = performance.getEntriesByName(`vue ${vm._name} init`);
+      console.log(`耗时：${entries[0].duration}ms`);
     }
 
     if (vm.$options.el) {
@@ -125,7 +128,6 @@ export function resolveConstructorOptions(Ctor: Class<Component>) {
 
   // 第 2 步：检查是否为子类（有 super 属性说明是通过 Vue.extend 创建的）
   // Ctor.super 指向父类构造函数，根 Vue 的 Ctor.super === undefined，不会进入此分支
-  console.log('resolveConstructorOptions 🦁', Ctor.super, Ctor.options)
   if (Ctor.super) {
     // 第 3 步：递归获取父类最新的 options
     // 父类可能也是子类，所以需要递归到根 Vue
@@ -134,7 +136,6 @@ export function resolveConstructorOptions(Ctor: Class<Component>) {
     // 第 4 步：获取创建子类时缓存的父类 options 快照
     // cachedSuperOptions 是 Vue.extend 时保存的父类 options 快照
     const cachedSuperOptions = Ctor.superOptions
-    // console.log('resolveConstructorOptions 🦖', Ctor, options, superOptions, cachedSuperOptions)
     // 第 5 步：比较快照与最新值，判断父类 options 是否发生了变化
     // 如果相同，说明父类 options 没变，直接返回缓存的 Ctor.options（不需要重新合并）
     // 如果不同，说明父类 options 发生了变化（例如通过 Vue.component() 全局注册了新组件）

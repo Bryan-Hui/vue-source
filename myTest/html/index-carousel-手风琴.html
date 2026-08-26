@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>手风琴轮播图 - Accordion Carousel</title>
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --panel-count: 5;
+            --gap: 6px;
+            --border-radius: 20px;
+            --transition-speed: 0.6s;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: var(--bg);
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* 背景装饰 */
+        .bg-decoration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-decoration .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.15;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .bg-decoration .orb:nth-child(1) {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, #ff6b9d, #c44569);
+            top: -15%;
+            left: -10%;
+            animation-delay: 0s;
+        }
+
+        .bg-decoration .orb:nth-child(2) {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, #3b7ddd, #1e3799);
+            bottom: -20%;
+            right: -8%;
+            animation-delay: -7s;
+        }
+
+        .bg-decoration .orb:nth-child(3) {
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, #20bf6b, #0a7c3e);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: -14s;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translate(0, 0) scale(1);
+            }
+            25% {
+                transform: translate(60px, -40px) scale(1.1);
+            }
+            50% {
+                transform: translate(-30px, 50px) scale(0.9);
+            }
+            75% {
+                transform: translate(-50px, -30px) scale(1.05);
+            }
+        }
+
+        /* 标题 */
+        .title {
+            position: relative;
+            z-index: 1;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .title h1 {
+            font-size: clamp(1.8rem, 4vw, 2.8rem);
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea, #764ba2, #f093fb, #f5576c);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 6s ease infinite;
+            letter-spacing: 0.05em;
+        }
+
+        .title .subtitle {
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 8px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        /* 手风琴容器 */
+        .accordion-wrapper {
+            position: relative;
+            z-index: 1;
+            width: min(95vw, 1100px);
+            height: clamp(320px, 55vh, 520px);
+        }
+
+        .accordion {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            gap: var(--gap);
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: calc(var(--border-radius) + 10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            box-shadow:
+                0 25px 60px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .accordion-panel {
+            position: relative;
+            flex: 1;
+            height: 100%;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            overflow: hidden;
+            transition: flex var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1),
+                        box-shadow var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            border: 2px solid transparent;
+        }
+
+        .accordion-panel.active {
+            flex: 4.5;
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow:
+                0 20px 50px rgba(0, 0, 0, 0.6),
+                0 0 60px rgba(102, 126, 234, 0.15),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+
+        .accordion-panel:not(.active):hover {
+            border-color: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.55);
+        }
+
+        /* 面板图片 */
+        .panel-bg {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+                        filter 0.8s ease;
+        }
+
+        .accordion-panel:not(.active) .panel-bg {
+            filter: brightness(0.45) saturate(0.6);
+        }
+
+        .accordion-panel.active .panel-bg {
+            filter: brightness(0.85) saturate(1.1);
+            transform: scale(1.05);
+        }
+
+        .accordion-panel:hover .panel-bg {
+            transform: scale(1.08);
+        }
+
+        .accordion-panel.active:hover .panel-bg {
+            transform: scale(1.08);
+        }
+
+        /* 渐变遮罩 */
+        .panel-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                180deg,
+                rgba(0, 0, 0, 0) 0%,
+                rgba(0, 0, 0, 0) 40%,
+                rgba(0, 0, 0, 0.7) 80%,
+                rgba(0, 0, 0, 0.9) 100%
+            );
+            transition: opacity 0.5s ease;
+        }
+
+        .accordion-panel:not(.active) .panel-overlay {
+            background: linear-gradient(
+                180deg,
+                rgba(0, 0, 0, 0.3) 0%,
+                rgba(0, 0, 0, 0.5) 50%,
+                rgba(0, 0, 0, 0.8) 100%
+            );
+        }
+
+        /* 编号标签 */
+        .panel-number {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(10px);
+            padding: 5px 12px;
+            border-radius: 20px;
+            letter-spacing: 0.08em;
+            transition: all 0.5s ease;
+            z-index: 2;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .accordion-panel.active .panel-number {
+            background: rgba(102, 126, 234, 0.7);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* 内容区 */
+        .panel-content {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 30px 24px;
+            z-index: 2;
+            transition: all 0.5s ease;
+            transform: translateY(0);
+        }
+
+        .panel-content .tag {
+            display: inline-block;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            padding: 4px 10px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.4s ease 0.1s;
+        }
+
+        .accordion-panel.active .panel-content .tag {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .panel-content h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 6px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.4s ease 0.15s;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .accordion-panel.active .panel-content h3 {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .panel-content p {
+            font-size: 0.82rem;
+            color: rgba(255, 255, 255, 0.75);
+            line-height: 1.5;
+            max-width: 90%;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.4s ease 0.2s;
+            text-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+        }
+
+        .accordion-panel.active .panel-content p {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* 非激活面板的竖排文字 */
+        .panel-vertical-label {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%) rotate(-90deg);
+            transform-origin: center center;
+            white-space: nowrap;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.7);
+            letter-spacing: 0.1em;
+            z-index: 2;
+            transition: all 0.5s ease;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+        }
+
+        .accordion-panel.active .panel-vertical-label {
+            opacity: 0;
+            transform: translateX(-50%) rotate(-90deg) translateY(20px);
+        }
+
+        /* 发光线条 */
+        .panel-glow-line {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: 3;
+        }
+
+        .accordion-panel.active .panel-glow-line {
+            opacity: 1;
+            animation: glowPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% {
+                opacity: 0.5;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
+        /* 导航指示器 */
+        .nav-dots {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        .nav-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.25);
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid transparent;
+        }
+
+        .nav-dot:hover {
+            background: rgba(255, 255, 255, 0.5);
+            transform: scale(1.3);
+        }
+
+        .nav-dot.active {
+            background: #667eea;
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.6);
+            width: 32px;
+            border-radius: 10px;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .accordion-wrapper {
+                width: 98vw;
+                height: clamp(250px, 40vh, 380px);
+            }
+
+            .accordion {
+                gap: 4px;
+                padding: 6px;
+                --border-radius: 14px;
+            }
+
+            .accordion-panel {
+                --border-radius: 14px;
+            }
+
+            .panel-content {
+                padding: 16px 12px;
+            }
+
+            .panel-content h3 {
+                font-size: 1rem;
+            }
+
+            .panel-content p {
+                font-size: 0.7rem;
+                display: none;
+            }
+
+            .panel-vertical-label {
+                font-size: 0.7rem;
+                bottom: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 背景装饰 -->
+    <div class="bg-decoration">
+        <div class="orb"></div>
+        <div class="orb"></div>
+        <div class="orb"></div>
+    </div>
+
+    <!-- 标题 -->
+    <div class="title">
+        <h1>Accordion Carousel</h1>
+        <p class="subtitle">Hover or Click to Explore</p>
+    </div>
+
+    <!-- 手风琴轮播 -->
+    <div class="accordion-wrapper">
+        <div class="accordion" id="accordion">
+            <!-- 面板通过 JS 动态生成 -->
+        </div>
+    </div>
+
+    <!-- 导航点 -->
+    <div class="nav-dots" id="navDots"></div>
+
+    <script>
+        (function() {
+            // ============ 数据配置 ============
+            const panelsData = [
+                {
+                    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=80',
+                    tag: 'Nature',
+                    tagColor: '#20bf6b',
+                    title: '星夜山脉',
+                    subtitle: 'Mountain under the Milky Way',
+                    description: '银河倒映在群山之巅，璀璨星空与静谧大地交织成一幅绝美画卷。'
+                },
+                {
+                    image: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1200&q=80',
+                    tag: 'Ocean',
+                    tagColor: '#3b7ddd',
+                    title: '深海之浪',
+                    subtitle: 'Power of the Ocean',
+                    description: '汹涌澎湃的海浪卷起千层雪，大自然的力量在此刻展现得淋漓尽致。'
+                },
+                {
+                    image: 'https://images.unsplash.com/photo-1545569341-9eb8b30979d9?w=1200&q=80',
+                    tag: 'Travel',
+                    tagColor: '#f5576c',
+                    title: '京都古寺',
+                    subtitle: 'Ancient Temple in Kyoto',
+                    description: '千年古寺静立于樱花之中，朱红的塔身与粉白的樱花交相辉映。'
+                },
+                {
+                    image: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=1200&q=80',
+                    tag: 'Landscape',
+                    tagColor: '#f093fb',
+                    title: '秋日原野',
+                    subtitle: 'Autumn Fields',
+                    description: '金黄的原野在秋风中摇曳，夕阳余晖为大地披上温暖的色彩。'
+                },
+                {
+                    image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1200&q=80',
+                    tag: 'Forest',
+                    tagColor: '#667eea',
+                    title: '森林之光',
+                    subtitle: 'Sunlight through Forest',
+                    description: '阳光穿过茂密的森林，斑驳的光影洒落在青苔覆盖的大地上。'
+                }
+            ];
+
+            const accordion = document.getElementById('accordion');
+            const navDots = document.getElementById('navDots');
+            let activeIndex = 0;
+            let autoPlayTimer = null;
+            const AUTO_PLAY_INTERVAL = 4000;
+
+            // ============ 构建 DOM ============
+            function buildCarousel() {
+                panelsData.forEach((panel, index) => {
+                    // 面板
+                    const panelEl = document.createElement('div');
+                    panelEl.className = 'accordion-panel' + (index === activeIndex ? ' active' : '');
+                    panelEl.dataset.index = index;
+                    panelEl.innerHTML = `
+                        <div class="panel-bg" style="background-image: url('${panel.image}');"></div>
+                        <div class="panel-overlay"></div>
+                        <span class="panel-number">0${index + 1}</span>
+                        <div class="panel-vertical-label">${panel.subtitle}</div>
+                        <div class="panel-content">
+                            <span class="tag" style="background: ${panel.tagColor}; color: #fff;">${panel.tag}</span>
+                            <h3>${panel.title}</h3>
+                            <p>${panel.description}</p>
+                        </div>
+                        <div class="panel-glow-line"></div>
+                    `;
+                    accordion.appendChild(panelEl);
+
+                    // 导航点
+                    const dot = document.createElement('span');
+                    dot.className = 'nav-dot' + (index === activeIndex ? ' active' : '');
+                    dot.dataset.index = index;
+                    navDots.appendChild(dot);
+                });
+            }
+
+            // ============ 切换面板 ============
+            function setActive(index) {
+                if (index === activeIndex) return;
+                activeIndex = index;
+
+                const panels = accordion.querySelectorAll('.accordion-panel');
+                const dots = navDots.querySelectorAll('.nav-dot');
+
+                panels.forEach((p, i) => {
+                    p.classList.toggle('active', i === index);
+                });
+
+                dots.forEach((d, i) => {
+                    d.classList.toggle('active', i === index);
+                });
+            }
+
+            // ============ 事件绑定 ============
+            function bindEvents() {
+                // 面板点击
+                accordion.addEventListener('click', (e) => {
+                    const panel = e.target.closest('.accordion-panel');
+                    if (!panel) return;
+                    const index = parseInt(panel.dataset.index);
+                    setActive(index);
+                    resetAutoPlay();
+                });
+
+                // 导航点点击
+                navDots.addEventListener('click', (e) => {
+                    const dot = e.target.closest('.nav-dot');
+                    if (!dot) return;
+                    const index = parseInt(dot.dataset.index);
+                    setActive(index);
+                    resetAutoPlay();
+                });
+
+                // 键盘导航
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'ArrowLeft') {
+                        const newIndex = (activeIndex - 1 + panelsData.length) % panelsData.length;
+                        setActive(newIndex);
+                        resetAutoPlay();
+                    } else if (e.key === 'ArrowRight') {
+                        const newIndex = (activeIndex + 1) % panelsData.length;
+                        setActive(newIndex);
+                        resetAutoPlay();
+                    }
+                });
+
+                // 触摸滑动支持
+                let touchStartX = 0;
+                accordion.addEventListener('touchstart', (e) => {
+                    touchStartX = e.touches[0].clientX;
+                }, { passive: true });
+
+                accordion.addEventListener('touchend', (e) => {
+                    const diff = e.changedTouches[0].clientX - touchStartX;
+                    if (Math.abs(diff) > 50) {
+                        if (diff > 0) {
+                            // 右滑 -> 上一个
+                            const newIndex = (activeIndex - 1 + panelsData.length) % panelsData.length;
+                            setActive(newIndex);
+                        } else {
+                            // 左滑 -> 下一个
+                            const newIndex = (activeIndex + 1) % panelsData.length;
+                            setActive(newIndex);
+                        }
+                        resetAutoPlay();
+                    }
+                });
+            }
+
+            // ============ 自动播放 ============
+            function startAutoPlay() {
+                autoPlayTimer = setInterval(() => {
+                    const nextIndex = (activeIndex + 1) % panelsData.length;
+                    setActive(nextIndex);
+                }, AUTO_PLAY_INTERVAL);
+            }
+
+            function resetAutoPlay() {
+                clearInterval(autoPlayTimer);
+                startAutoPlay();
+            }
+
+            function stopAutoPlay() {
+                clearInterval(autoPlayTimer);
+            }
+
+            // ============ 初始化 ============
+            function init() {
+                buildCarousel();
+                bindEvents();
+                startAutoPlay();
+
+                // 鼠标悬停时暂停自动播放
+                const wrapper = document.querySelector('.accordion-wrapper');
+                wrapper.addEventListener('mouseenter', stopAutoPlay);
+                wrapper.addEventListener('mouseleave', startAutoPlay);
+            }
+
+            init();
+        })();
+    </script>
+</body>
+</html>
