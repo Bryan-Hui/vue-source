@@ -30,6 +30,7 @@ export function initMixin(Vue: Class<Component>) {
     // a flag to avoid this being observed
     vm._isVue = true  // 标记这是Vue实例，避免被响应式系统观察
     // merge options
+    // debugger
     console.log('initMixin ',options)
     if (options && options._isComponent) {  // 是组件（内部组件实例化）
       // optimize internal component instantiation
@@ -42,7 +43,6 @@ export function initMixin(Vue: Class<Component>) {
         options || {},  // 传入的选项
         vm  // 当前实例，作为merge的上下文
       )
-
       console.log('vm.$options == ', vm.$options)
     }
     /* istanbul ignore else */
