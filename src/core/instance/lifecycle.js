@@ -347,7 +347,6 @@ export function callHook (vm: Component, hook: string) {  // 调用生命周期�
   // #7573 disable dep collection when invoking lifecycle hooks
   pushTarget()  // 压入 undefined target，防止钩子执行时收集依赖
   const handlers = vm.$options[hook]  // 从选项中取出对应钩子的处理函数数组
-  console.log('callHook ',vm.$options,hook,handlers)
   const info = `${hook} hook`  // 错误信息描述
   if (handlers) {  // 如果有钩子函数
     for (let i = 0, j = handlers.length; i < j; i++) {  // 遍历所有钩子

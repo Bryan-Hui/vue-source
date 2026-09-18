@@ -31,7 +31,6 @@ export function initMixin(Vue: Class<Component>) {
     vm._isVue = true  // 标记这是Vue实例，避免被响应式系统观察
     // merge options
     // debugger
-    console.log('initMixin ',options)
     if (options && options._isComponent) {  // 是组件（内部组件实例化）
       // optimize internal component instantiation
       // since dynamic options merging is pretty slow, and none of the
@@ -43,8 +42,8 @@ export function initMixin(Vue: Class<Component>) {
         options || {},  // 传入的选项
         vm  // 当前实例，作为merge的上下文
       )
-      console.log('vm.$options == ', vm.$options)
     }
+
     /* istanbul ignore else */
     if (process.env.NODE_ENV !== 'production') {  // 非生产环境
       initProxy(vm)  // 用Proxy包裹vm，用于开发环境的属性访问警告
@@ -57,11 +56,13 @@ export function initMixin(Vue: Class<Component>) {
     initEvents(vm)  // 初始化事件系统（父组件传递的事件监听）
     initRender(vm)  // 初始化渲染相关（$createElement, _c等渲染函数）
     callHook(vm, 'beforeCreate')  // 调用 beforeCreate 生命周期钩子
+    // console.log('beforeCreate ',vm.$options)
     initInjections(vm)  // 解析注入（inject），在 data/props 之前初始化
     initState(vm)  // 初始化状态（props, methods, data, computed, watch）
     initProvide(vm)  // 解析提供（provide），在 data/props 之后初始化
     callHook(vm, 'created')  // 调用 created 生命周期钩子
 
+    // console.log('created ',vm.$options)
     /* istanbul ignore if */
     if (process.env.NODE_ENV !== 'production' && config.performance && mark) {  // 非生产环境且开启性能追踪时
       vm._name = formatComponentName(vm, false)  // 获取组件名称用于性能标识
@@ -114,8 +115,6 @@ export function initInternalComponent(vm: Component, options: InternalComponentO
 //   Ctor.sealedOptions —— 创建子类时 options 的密封快照（用于检测运行时的修改）
 export function resolveConstructorOptions(Ctor: Class<Component>) {
   let options = Ctor.options  // 获取构造函数的options，根Vue的在initGlobalAPI中初始化，包含{components, directives, filters, _base}；子类的在Vue.extend中生成
-
-  console.log('resolveConstructorOptions == ', options)
 
   if (Ctor.super) {  // 检查是否为子类（有super属性说明是通过Vue.extend创建的），根Vue的super为undefined，不会进入此分支
     const superOptions = resolveConstructorOptions(Ctor.super)  // 递归获取父类最新的options，父类可能也是子类，所以需要递归到根Vue

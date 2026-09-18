@@ -46,6 +46,7 @@ export function proxy(target: Object, sourceKey: string, key: string) {
 }
 
 export function initState(vm: Component) {
+  debugger
   vm._watchers = []
   const opts = vm.$options
   if (opts.props) initProps(vm, opts.props)
@@ -125,7 +126,7 @@ function initData(vm: Component) {
   // proxy data on instance
   const keys = Object.keys(data)
   const props = vm.$options.props
-  const methods = vm.$options.methods
+  const methods = vm.$options.methods // 方法
   let i = keys.length
   while (i--) {
     const key = keys[i]

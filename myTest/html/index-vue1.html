@@ -3,24 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>测试 init.js 41-45行</title>
+    <title>document</title>
   </head>
   <body>
-    <h3>测试 init.js 41-45行：_isComponent 分支逻辑</h3>
+    <!-- <h3>测试 init.js 41-45行：_isComponent 分支逻辑</h3> -->
     <div id="app">
-      <p>根实例 msg: {{msg}}</p>
-      <input v-model="msg" placeholder="输入触发 $data setter / $watch / $nextTick" />
-      <button v-on:click="onClick">点击触发 $on / $emit / $forceUpdate</button>
-      <button v-on:click="toggleComp">切换子组件触发 $destroy</button>
+      <p>{{msg}}</p>
+      <input v-model="msg" placeholder="" />
+      <!-- <button v-on:click="onClick">点击触发 $on / $emit / $forceUpdate</button> -->
+      <!-- <button v-on:click="toggleComp">切换子组件触发 $destroy</button> -->
       <my-comp v-if="showComp" v-on:custom-event="onCustomEvent"></my-comp>
     </div>
 
     <hr />
-    <h3>控制台输出说明：</h3>
+    <!-- <h3>控制台输出说明：</h3> -->
   </body>
-  <script>
-    console.log('body -=-= ',document.body.children)
-  </script>
   <script src="../../dist/vue.js"></script>
   <script>
     // console.log("========== 测试1：new Vue() 根实例 ==========");
@@ -38,7 +35,7 @@
       },
       watch: {
         msg(newVal) {
-          console.log('$watch 触发:', newVal)
+          // console.log('$watch 触发:', newVal)
         }
       },
       methods: {
@@ -55,7 +52,7 @@
       },
       mounted() {
         this.$nextTick(() => {
-          console.log('根实例 $nextTick 回调执行')
+          // console.log('根实例 $nextTick 回调执行')
         })
       },
       components: {
@@ -71,10 +68,10 @@
           },
           mounted() {
             this.$on('hook:beforeDestroy', () => {
-              console.log('子组件 beforeDestroy 钩子触发')
+              // console.log('子组件 beforeDestroy 钩子触发')
             })
             this.$nextTick(() => {
-              console.log('子组件 $nextTick 执行')
+              // console.log('子组件 $nextTick 执行')
             })
           }
         },
