@@ -56,13 +56,11 @@ export function initMixin(Vue: Class<Component>) {
     initEvents(vm)  // 初始化事件系统（父组件传递的事件监听）
     initRender(vm)  // 初始化渲染相关（$createElement, _c等渲染函数）
     callHook(vm, 'beforeCreate')  // 调用 beforeCreate 生命周期钩子
-    // console.log('beforeCreate ',vm.$options)
     initInjections(vm)  // 解析注入（inject），在 data/props 之前初始化
     initState(vm)  // 初始化状态（props, methods, data, computed, watch）
     initProvide(vm)  // 解析提供（provide），在 data/props 之后初始化
     callHook(vm, 'created')  // 调用 created 生命周期钩子
 
-    // console.log('created ',vm.$options)
     /* istanbul ignore if */
     if (process.env.NODE_ENV !== 'production' && config.performance && mark) {  // 非生产环境且开启性能追踪时
       vm._name = formatComponentName(vm, false)  // 获取组件名称用于性能标识

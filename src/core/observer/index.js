@@ -130,7 +130,7 @@ export function observe (value: any, asRootData: ?boolean): Observer | void {
 }
 
 /**
- * Define a reactive property on an Object.
+ * Define a reactive property on an Object.  定义对象的响应式属性
  */
 export function defineReactive (
   obj: Object,
@@ -173,7 +173,7 @@ export function defineReactive (
     set: function reactiveSetter (newVal) {
       const value = getter ? getter.call(obj) : val
       /* eslint-disable no-self-compare */
-      if (newVal === value || (newVal !== newVal && value !== value)) {
+      if (newVal === value || (newVal !== newVal && value !== value)) {  // newVal !== newVal && value !== value  判断不是NaN, NaN
         return
       }
       /* eslint-enable no-self-compare */

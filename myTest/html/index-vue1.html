@@ -10,8 +10,10 @@
     <div id="app">
       <p>{{msg}}</p>
       <input v-model="msg" placeholder="" />
-      <!-- <button v-on:click="onClick">点击触发 $on / $emit / $forceUpdate</button> -->
-      <!-- <button v-on:click="toggleComp">切换子组件触发 $destroy</button> -->
+      <button v-on:click="onClick">点击触发 $emit</button>
+      <button v-on:click="onOnceTest">测试 $once</button>
+      <button v-on:click="onOffTest">测试 $off</button>
+      <button v-on:click="toggleComp">切换子组件</button>
       <my-comp v-if="showComp" v-on:custom-event="onCustomEvent"></my-comp>
     </div>
 
@@ -40,8 +42,14 @@
       },
       methods: {
         onClick() {
-          this.msg = 'clicked'
-          this.$forceUpdate()
+          this.$emit('my-event', '来自 $emit 的消息')
+        },
+        onOnceTest() {
+          this.$emit('once-test', 'once 触发')
+        },
+        onOffTest() {
+          this.$off('my-event')
+          this.msg = '已 $off 移除 my-event，再点上面按钮无反应'
         },
         toggleComp() {
           this.showComp = !this.showComp
@@ -51,6 +59,20 @@
         }
       },
       mounted() {
+        // initEvents: vm._events = Object.create(null)
+        // initEvents: vm._hasHookEvent = false
+        // 父组件 v-on:xxx → _parentListeners → updateComponentListeners → $on 注册
+
+        // 验证 $on
+        this.$on('my-event', (val) => {
+          this.msg = val
+        })
+
+        // 验证 $once
+        this.$once('once-test', (val) => {
+          this.msg = val + ' - 只会显示一次'
+        })
+
         this.$nextTick(() => {
           // console.log('根实例 $nextTick 回调执行')
         })
