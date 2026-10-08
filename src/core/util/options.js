@@ -169,6 +169,9 @@ function dedupeHooks(hooks) {
   return res
 }
 
+/**
+ * LIFECYCLE HOOKS  合并策略，添加生命周期的合并策略
+ */
 LIFECYCLE_HOOKS.forEach(hook => {
   strats[hook] = mergeHook
 })

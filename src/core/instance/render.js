@@ -17,7 +17,6 @@ import VNode, { createEmptyVNode } from '../vdom/vnode' // 导入 VNode 类和�
 import { isUpdatingChildComponent } from './lifecycle' // 导入生命周期模块中的标记，判断是否正在更新子组件
 
 export function initRender (vm: Component) { // 初始化渲染相关属性和方法，在组件实例初始化时调用
-  debugger
   vm._vnode = null // the root of the child tree // 子组件树的根 VNode，即当前组件渲染产出的 VNode
   vm._staticTrees = null // v-once cached trees // v-once 指令缓存的静态 VNode 树数组
   const options = vm.$options // 缓存组件的合并选项对象，方便后续使用

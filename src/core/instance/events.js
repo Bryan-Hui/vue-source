@@ -10,12 +10,10 @@ import {
 import { updateListeners } from '../vdom/helpers/index'
 
 export function initEvents (vm: Component) {
-  // debugger
   vm._events = Object.create(null)
   vm._hasHookEvent = false
   // init parent attached events
   const listeners = vm.$options._parentListeners
-  console.log('initEvents ',listeners)
   if (listeners) {
     updateComponentListeners(vm, listeners)
   }

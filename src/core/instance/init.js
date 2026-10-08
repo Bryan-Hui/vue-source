@@ -50,6 +50,7 @@ export function initMixin(Vue: Class<Component>) {
     } else {
       vm._renderProxy = vm  // 生产环境直接用vm本身
     }
+
     // expose real self
     vm._self = vm  // 保存真实的自身引用（避免被Proxy包裹导致的问题）
     initLifecycle(vm)  // 初始化生命周期关系（$parent, $children, $root等）
