@@ -16,10 +16,14 @@
   </head>
   <body>
     <div class="box"></div>
+    <div data-id="1"></div>
   </body>
   <script>
     const ele = document.querySelector(".box");
 
     console.log(ele.offsetHeight, ele.offsetWidth, ele.getBoundingClientRect());
+
+    const ele1 = document.querySelector("[data-id='1']");
+    console.log('ele1 ',ele1)
   </script>
 </html>
